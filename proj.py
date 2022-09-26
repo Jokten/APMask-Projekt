@@ -65,7 +65,7 @@ def data_reader(dat):
 L = 1000
 ds = data_reader('SerieA.csv')
 
-stats.norm(loc=5, sclae=10)
+stats.norm(loc=5, scale=10)
 t = np.zeros(L)
 s = np.zeros((2,L))
 #model = Model(1)
