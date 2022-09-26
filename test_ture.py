@@ -24,7 +24,7 @@ class Model:
 
       vs = np.array([[p1[1], 0],[0, p2[1]]])
       ms = np.array([[p1[0]],[p2[0]]]) 
-      vts = 5
+      vts = 10
       A = np.array([[1,-1]])
       s = np.array([[1],[1]]) # Startvärden s?
       t = 0
@@ -57,7 +57,23 @@ class Model:
       self.players[match[0]] = [np.mean(s1_samples[30:]), np.std(s1_samples[30:])]
       self.players[match[1]] = [np.mean(s2_samples[30:]), np.std(s2_samples[30:])]
 
+      
+
       return t_samples, s1_samples, s2_samples
+    
+    def odds(self, match):
+      s1 = self.players[match[0]][0]
+      s2 = self.players[match[1]][0]
+      mean = s1-s2 # s1-s2
+      var = 25 # vts
+      t_pdf = stats.norm(loc=mean, scale=var)
+      print()
+      print(match[1], ' ', round(s1,2),  ' vs ', match[0], ' ', round(s2,2))
+      print('Odds', match[1] , ': ', round(1/ (1-t_pdf.cdf(0)),2), ', probability: ', round(1- t_pdf.cdf(0), 2))
+      print('Odds', match[0] , ': ', round(1/t_pdf.cdf(0), 2), ', probability: ', round(t_pdf.cdf(0), 2))
+
+
+
 
 
 def data_reader(dat):
@@ -71,12 +87,17 @@ def data_reader(dat):
     return matches
 
 
+
+
 ds = data_reader('SerieA.csv')
 predictions = []
 m = Model()
 
-for match in ds[:]:
+for match in ds[:50]:
   m.add_team(match)
+  m.odds(match)
+
+  # Predictions here are made by sign(E(t)) and if draw team 1 wins
   if m.players[match[0]][0] >= m.players[match[1]][0]:
     predictions.append(1)
   else:
@@ -84,6 +105,7 @@ for match in ds[:]:
   m.update(match)
 
 
+print()
 for team in {k: v for k, v in sorted(m.players.items(), key=lambda item: item[1], reverse=True)}:
     print(team, m.players[team])
 
@@ -99,3 +121,5 @@ print('Accuracy: ', sum(correct_predictions)/len(correct_predictions))
 # After 20 matches Accuracy: 0.55
 # After 100 matches Accuracy:  0.57
 # After all matches Accuracy:  0.5845588235294118
+# Alla matcher med vts = 25, Accuracy:  0.5882352941176471
+# Efter att ha tagit bort första 100 matcherna, Accuracy:  0.5988372093023255
