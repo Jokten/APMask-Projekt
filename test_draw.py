@@ -5,6 +5,11 @@ from scipy import stats
 import matplotlib.pyplot as plt
 import csv
 
+# Hyperparameters
+NUMBER_OF_MATCHES = -1 # -1 for all matches
+VTS = 50 # Variance for t, before sqrt
+DRAW_REGION = 0.31 # Hyperparameter for size of region to draw, 0.06 should give 2
+
 class Model:
     def __init__(self) -> None:
         self.players = {}
@@ -24,16 +29,16 @@ class Model:
 
       vs = np.array([[p1[1], 0],[0, p2[1]]])
       ms = np.array([[p1[0]],[p2[0]]]) 
-      vts = 50
+      vts = VTS
       A = np.array([[1,-1]])
       s = np.array([[1],[1]]) # Startvärden s?
-      draw_eps = np.sqrt(vts) * 0.1
+      draw_eps = np.sqrt(vts) * DRAW_REGION
 
       def gen_t():
         if match[2] > 0:
-          t = stats.truncnorm.rvs(0, 10000, loc=(A @ s), scale= np.sqrt(vts))
+          t = stats.truncnorm.rvs(draw_eps, 10000, loc=(A @ s), scale= np.sqrt(vts))
         if match[2] < 0:
-          t = stats.truncnorm.rvs(-10000, 0, loc=(A @ s), scale= np.sqrt(vts))
+          t = stats.truncnorm.rvs(-10000, -draw_eps, loc=(A @ s), scale= np.sqrt(vts))
         else: # Draw
           t = stats.truncnorm.rvs(-1*draw_eps, draw_eps, loc=(A @ s), scale= np.sqrt(vts))
         return t
@@ -66,7 +71,7 @@ class Model:
       s1 = self.players[match[0]][0]
       s2 = self.players[match[1]][0]
       mean = s1-s2 # s1-s2
-      var = 50 # vts
+      var = VTS # vts
       t_pdf = stats.norm(loc=mean, scale=np.sqrt(var))
       print()
       print(match[1], ' ', round(s1,2),  ' vs ', match[0], ' ', round(s2,2))
@@ -93,15 +98,16 @@ def data_reader(dat):
 
 
 ds = data_reader('SerieA.csv')
+print('Maximum number of matches: ', len(ds))
 predictions = []
 m = Model()
 
-for match in ds[:]:
+for match in ds[:NUMBER_OF_MATCHES]:
   m.add_team(match)
   m.odds(match)
   
-  vts = 50
-  draw_eps = np.sqrt(vts) * 0.1
+  vts = VTS
+  draw_eps = np.sqrt(vts) * DRAW_REGION
   # Predictions here are made by sign(E(t)) and if draw team 1 wins
   if m.players[match[0]][0] - m.players[match[1]][0] > draw_eps:
     predictions.append(1)
@@ -132,7 +138,7 @@ for i in range(len(predictions)):
 
 print('Accuracy: ', sum(correct_predictions)/len(correct_predictions))
 print("Number of predicted draws: ", predictions.count(0))
-print("Number of actual draws: ", [i[2] for i in ds[:]].count(0))
+print("Number of actual draws: ", [i[2] for i in ds[:NUMBER_OF_MATCHES]].count(0))
 
 # After 20 matches Accuracy: 0.55
 # After 100 matches Accuracy:  0.57
