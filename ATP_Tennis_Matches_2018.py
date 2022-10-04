@@ -74,34 +74,24 @@ class Model:
       print('Odds', match[0] , ': ', round(1/t_pdf.cdf(0), 2), ', probability: ', round(t_pdf.cdf(0), 2))
 
 
-
-
 def data_reader(dat):
-    ATP_2018 = pd.read_csv(dat)
+    ATP_2018 = pd.read_csv(dat) # read CSV to produce panda dataframe into to count number of times player has played
     matches = []
     with open(dat, 'r', newline='') as file:
         reader = csv.reader(file)
         next(reader)
         for i in reader:
-            # Both the players
+            # Both the players have to have played at least 8 matches on tour for it to count
             if (ATP_2018["winner_name"] == i[10]).sum() + (ATP_2018["loser_name"] == i[10]).sum() >= 8:
                 if (ATP_2018["winner_name"] == i[18]).sum() + (ATP_2018["loser_name"] == i[18]).sum() >= 8:
-                    matches.append([i[10], i[18], 1])
+                    matches.append([i[10], i[18], 1]) # always a won, since i[10] is the winner column and i[18] is the loser column
     return matches
 
 
 
-
-
-# ds = data_reader('SerieA.csv')
-# predictions = []
-# m = Model()
-# 
-
-  
-# My code
-
-ds = data_reader("atp_matches_2018.csv")
+# ==================
+ 
+ds = data_reader("atp_matches_2018.csv") # downloading data
 predictions = []
 m = Model()
 

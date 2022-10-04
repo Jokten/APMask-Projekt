@@ -7,6 +7,11 @@ Created on Mon Oct  3 15:21:01 2022
 """
 import numpy as np
 from scipy.stats import truncnorm
+from matplotlib import pyplot as plt
+import numpy as np
+from numpy.linalg import inv
+from scipy import stats
+
 def multiplyGauss(m1, s1, m2, s2):
 # computes the Gaussian distribution N(m,s) being propotional to N(m1,s1)*N(m2,s2)
 #
@@ -71,8 +76,9 @@ S1_m = 1 # mean of S1
 S1_s = 1 # variance of S1
 S2_m = 1 # mean of S2 
 S2_s = 1 # variance of S2
-sv = 5   # the variance of p(s|t)
-y0 = 1   # Who Won
+vts  = 5   # the variance of p(s|t)
+y0   = 1   # Who won
+t = 0
 
 
 
@@ -95,8 +101,8 @@ A = np.array([[1,-1]])
 vs = np.array([[S1_s, 0],[0,S2_s]]) # variance vs standard deviation
 ms = np.array([[S1_m],[S2_m]])
 
-mu7_m = A @ A.T
-mu7_s = sv + A @ vs @ A.T
+mu7_m = A @ms
+mu7_s = vts + A @ vs @ A.T
 
 # Message u8 from t to fst
 # Do moment matching of the marginal of t. p(t|y)
@@ -105,54 +111,49 @@ if y0 == 1:
 else:
     a, b = np.NINF, 0 
     
-# Do moment matching of the marginal of t
-# if y0 == 1:
-#     S1win, S1win = 0, np.Inf
-#     S2lose, S2lose = np.NINF, 0 
-# else:
-#     S2win, S2win = 0, np.Inf
-#     S1lose, blose = np.NINF, 0 
-# pt_m_won, pt_s_won, pt_m_lost, pt_s_lost   = truncGaussMM( awin, bwin, alose, blose, mu7_m, mu7_s)
-
 pt_m, pt_s = truncGaussMM(a, b, mu7_m, mu7_s)
 
 # Compute the message from t to fst
 # Outgoing message is the approximated marginal divided by the incoming message
 mu8_m, mu8_s = divideGauss(pt_m, pt_s, mu7_m, mu7_s)
-# mu8_m, mu8_s = divideGauss(pt_m, pt_s, mu7_m, mu7_s)
 
-# Message u9 from fst to S1
-mu9_m = mu8_m
-mu9_s = mu8_s + sv # fel
-# Message u10 from fst to S2
-mu10_m = mu8_m
-mu10_s = mu8_s + sv # fel
+# We have vs: matrix with variances 
+#         A : vector do get right 
+#         vts: is the number given for p(s|t) (hyperparameter)
+#         mu8: p(t)
 
-# Compute marginal of S1
-pS1_m, pS1_s = multiplyGauss(mu4_m, mu4_s, mu9_m, mu9_s)
+# finding p(s|t)
+vst = inv(inv(vs) + 1/vts*A.T @ A) # variance of s|t
+mst = vst @ (inv(vs) @ ms + 1/vts*A.T*t) # mu of s|t
 
-# Compute marginal of S2
-pS2_m, pS2_s = multiplyGauss(mu3_m, mu3_s, mu10_m, mu10_s)
+vst
 
-# # Compute the message from t to fst
-# mu8_m_, mu8_s = divideGauss(pt_m, pt_s, mu7_m, mu7_s)
-# mu8_m, mu8_s = divideGauss(pt_m, pt_s, mu7_m, mu7_s)
-
+# now we are going to calculate the marginal of s
+# mu_both_S= vst + A@vs@A.T
+# sigma_both_S = A@ms
+# 
+# s = stats.multivariate_normal.rvs(mean=mst.reshape(2), cov=vst)
+# 
+# 
 # # Message u9 from fst to S1
-# mu9_m = mu8_m
-# mu9_s = mu8_s + sv
-# # Message u10 from fst to S2
-# mu10_m = mu8_m
-# mu10_s = mu8_s + sv
+# mu9_m = mu8_m[0]
+# mu9_s = mu8_s[0] # fel
+# 
+# # # Message u10 from fst to S2
+# mu10_m = mu8_m[1]
+# mu10_s = mu8_s[1] # fel
 
+
+### FUNCTIONAL #### 
 # # Compute marginal of S1
 # pS1_m, pS1_s = multiplyGauss(mu4_m, mu4_s, mu9_m, mu9_s)
-
+# 
 # # Compute marginal of S2
 # pS2_m, pS2_s = multiplyGauss(mu3_m, mu3_s, mu10_m, mu10_s)
 
 
 
-print(f'S1 mu {pS1_m} S1 sigma {pS1_s}') # Output: 0.564189583548
-print(f'S2 mu {pS2_m} S2 sigma {pS2_s}') # Output: 0.681690113816
+# 
+# print(f'S1 mu {pS1_m} S1 sigma {pS1_s}') # Output: 0.564189583548
+# print(f'S2 mu {pS2_m} S2 sigma {pS2_s}') # Output: 0.681690113816
 
