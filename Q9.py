@@ -11,6 +11,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 from numpy.linalg import inv
 from scipy import stats
+import math
 
 def multiplyGauss(m1, s1, m2, s2):
 # computes the Gaussian distribution N(m,s) being propotional to N(m1,s1)*N(m2,s2)
@@ -72,11 +73,11 @@ def truncGaussMMwith2(awin, bwin, alose, blose, m0, s0):
 
 
 # Hyperparameters
-S1_m = 1 # mean of S1
-S1_s = 1 # variance of S1
-S2_m = 1 # mean of S2 
-S2_s = 1 # variance of S2
-vts  = 5   # the variance of p(s|t)
+S1_m = 100 # mean of S1
+S1_s = 15 # variance of S1
+S2_m = 100 # mean of S2 
+S2_s = 15 # variance of S2
+vts  = 10   # the variance of p(s|t)
 y0   = 1   # Who won
 t = 0
 
@@ -102,7 +103,7 @@ vs = np.array([[S1_s, 0],[0,S2_s]]) # variance vs standard deviation
 ms = np.array([[S1_m],[S2_m]])
 
 mu7_m = A @ms
-mu7_s = vts + A @ vs @ A.T
+mu7_s = vts + A@vs@A.T
 
 # Message u8 from t to fst
 # Do moment matching of the marginal of t. p(t|y)
@@ -117,32 +118,24 @@ pt_m, pt_s = truncGaussMM(a, b, mu7_m, mu7_s)
 # Outgoing message is the approximated marginal divided by the incoming message
 mu8_m, mu8_s = divideGauss(pt_m, pt_s, mu7_m, mu7_s)
 
+
+
 # We have vs: matrix with variances 
 #         A : vector do get right 
 #         vts: is the number given for p(s|t) (hyperparameter)
 #         mu8: p(t)
 
-# finding p(s|t)
-vst = inv(inv(vs) + 1/vts*A.T @ A) # variance of s|t
-mst = vst @ (inv(vs) @ ms + 1/vts*A.T*t) # mu of s|t
-
-vst
-
-# now we are going to calculate the marginal of s
-# mu_both_S= vst + A@vs@A.T
-# sigma_both_S = A@ms
-# 
-# s = stats.multivariate_normal.rvs(mean=mst.reshape(2), cov=vst)
-# 
-# 
+ 
 # # Message u9 from fst to S1
-# mu9_m = mu8_m[0]
-# mu9_s = mu8_s[0] # fel
-# 
-# # # Message u10 from fst to S2
-# mu10_m = mu8_m[1]
-# mu10_s = mu8_s[1] # fel
 
+mu9_m = mu6_m  + mu8_m
+mu9_s = vts + mu4_s + mu8_s
+
+# # # Message u10 from fst to S2
+mu10_m = mu5_m - mu8_m
+mu10_s = vts + mu3_s + mu8_s
+
+print(f' ({mu9_m, mu9_s}), ({mu10_m, mu10_s})')
 
 ### FUNCTIONAL #### 
 # # Compute marginal of S1

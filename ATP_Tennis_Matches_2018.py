@@ -16,10 +16,10 @@ class Model:
                 self.players[player] = [100, 15]
     
     def update(self,match):
-        L = 300
+        L = 300             
         self.gibbs(L, match)
 
-    def gibbs(self, L, match):
+    def gibbs(self, L, match): # det finns inget L i denna GIbs
       p1 = self.players[match[0]]
       p2 = self.players[match[1]]
 
@@ -75,8 +75,11 @@ class Model:
 
 
 def data_reader(dat):
+    """ Processes CSV file and produces list of list with player names who competed
+     and who won. """
     ATP_2018 = pd.read_csv(dat) # read CSV to produce panda dataframe into to count number of times player has played
     matches = []
+    # read CSV file line by line
     with open(dat, 'r', newline='') as file:
         reader = csv.reader(file)
         next(reader)
@@ -89,39 +92,38 @@ def data_reader(dat):
 
 
 
-# ==================
- 
-ds = data_reader("atp_matches_2018.csv") # downloading data
-predictions = []
-m = Model()
+# ================== # 
+ds = data_reader('SerieA.csv') # downloading data
+predictions = []    # create predictions list
+m = Model()   
 
 
 for match in ds:
   m.add_team(match)
   m.odds(match)
-
-  # Predictions here are made by sign(E(t)) and if draw team 1 wins
   if m.players[match[0]][0] >= m.players[match[1]][0]:
     predictions.append(1)
   else:
     predictions.append(-1)
   m.update(match)
-#   
-print()
+ 
+# print in order of decreasing player skill
 for team in {k: v for k, v in sorted(m.players.items(), key=lambda item: item[1], reverse=True)}:
     print(team, m.players[team])
 
 correct_predictions = []
-for i in range(len(predictions)):
+# Determine Number of predictions that were correct by comparing with data 
+for i in range(100, len(predictions)): 
   if predictions[i] == ds[i][2]:
     correct_predictions.append(True)
   else:
     correct_predictions.append(False)
 
+# Print Accuracy
 print('Accuracy: ', sum(correct_predictions)/len(correct_predictions))
 
-# After 20 matches Accuracy: 0.55
-# After 100 matches Accuracy:  0.57
-# After all matches Accuracy:  0.5845588235294118
-# Alla matcher med vts = 25, Accuracy:  0.5882352941176471
-# Efter att ha tagit bort första 100 matcherna, Accuracy:  0.5988372093023255
+# After 20 matches Accuracy: 
+# After 100 matches Accuracy:  
+# After all matches Accuracy: 
+# Alla matcher med vts = 25, Accuracy:  
+# Efter att ha tagit bort första 100 matcherna, Accuracy:  
