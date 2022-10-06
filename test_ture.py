@@ -22,19 +22,20 @@ class Model:
       p1 = self.players[match[0]]
       p2 = self.players[match[1]]
 
-      vs = np.array([[p1[1], 0],[0, p2[1]]])
+      vs = np.array([[p1[1]**2, 0], [0, p2[1]**2]])
       ms = np.array([[p1[0]],[p2[0]]]) 
       vts = 10
       A = np.array([[1,-1]])
       s = np.array([[1],[1]]) # Startvärden s?
-      t = 0
+
+      print(A @ vs @ A.T)
 
 
       def gen_t():
         if match[2] > 0:
-          t = stats.truncnorm.rvs(0, 10000, loc=(A @ s), scale= vts)
+          t = stats.truncnorm.rvs(0, 10000, loc=(A @ s), scale= np.sqrt(vts))
         else:
-          t = stats.truncnorm.rvs(-10000, 0, loc=(A @ s), scale= vts)
+          t = stats.truncnorm.rvs(-10000, 0, loc=(A @ s), scale= np.sqrt(vts))
         return t
 
       def gen_s():
@@ -65,16 +66,16 @@ class Model:
       s1 = self.players[match[0]][0]
       s2 = self.players[match[1]][0]
       mean = s1-s2 # s1-s2
-      var = 25 # vts
-      t_pdf = stats.norm(loc=mean, scale=var)
+      var = 10 # vts
+      t_pdf = stats.norm(loc=mean, scale=np.sqrt(var))
       print()
       print(match[1], ' ', round(s1,2),  ' vs ', match[0], ' ', round(s2,2))
-      print('Odds', match[1] , ': ', round(1/ (1-t_pdf.cdf(0)),2), ', probability: ', round(1- t_pdf.cdf(0), 2))
-      print('Odds', match[0] , ': ', round(1/t_pdf.cdf(0), 2), ', probability: ', round(t_pdf.cdf(0), 2))
+      print('Odds', match[1] , ':', round(1/ (1-t_pdf.cdf(0)),2), 'probability: ', round(1- t_pdf.cdf(0), 2))
+      print('Odds', match[0] , ':', round(1/t_pdf.cdf(0), 2), 'probability: ', round(t_pdf.cdf(0), 2))
 
 
 
-
+# 0,3 std ca 25% 
 
 def data_reader(dat):
     matches = []
@@ -90,10 +91,11 @@ def data_reader(dat):
 
 
 ds = data_reader('SerieA.csv')
+print(ds)
 predictions = []
 m = Model()
 
-for match in ds[:50]:
+for match in ds[:1]:
   m.add_team(match)
   m.odds(match)
 
@@ -123,3 +125,4 @@ print('Accuracy: ', sum(correct_predictions)/len(correct_predictions))
 # After all matches Accuracy:  0.5845588235294118
 # Alla matcher med vts = 25, Accuracy:  0.5882352941176471
 # Efter att ha tagit bort första 100 matcherna, Accuracy:  0.5988372093023255
+
